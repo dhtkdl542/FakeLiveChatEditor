@@ -188,7 +188,7 @@
 
       <!-- 꾸미기 -->
       <section class="panel" data-panel="deco">
-        <div class="card">
+        <div class="card templates">
           <h3>템플릿</h3>
           <p class="hint">셋은 따로 고릅니다. 플랫폼은 후원 단위 · 금액 · 후원창 모양을, 방송 템플릿은 스티커 배치를, 채팅창 템플릿은 채팅 줄 모양을 정합니다.</p>
           <label class="field"><span>플랫폼 <i>후원 단위 · 후원창</i></span><select data-field="platform" id="platformSelect"></select></label>
@@ -206,11 +206,11 @@
           <div class="grid3">
             <label class="field check"><input type="checkbox" data-field="donationsOn"><span>후원 켜기</span></label>
             <label class="field"><span>평균 간격 <i>초</i></span><input type="number" data-field="donationEvery" value="15" min="1" max="600"></label>
-            <label class="field"><span>단위 <i>플랫폼을 바꾸면 따라 바뀜</i></span><input type="text" data-field="donationUnit" value="하트" placeholder="비우면 플랫폼 단위"></label>
+            <label class="field"><span>단위</span><input type="text" data-field="donationUnit" value="하트" placeholder="비우면 플랫폼 단위"></label>
           </div>
           <label class="field"><span>금액 목록 <i>작은 금액이 더 자주 나옵니다</i></span><input type="text" data-field="donationAmounts" value="10, 30, 50, 100, 300, 550, 1000"></label>
           <label class="field"><span>메시지 붙일 확률 <i data-show="donationMsgChance" data-unit="%"></i></span><input type="range" data-field="donationMsgChance" value="40" min="0" max="100"></label>
-          <p class="hint">단위는 '하트' · '별풍선' 처럼 개수로, '₩' · '$' · '원' 이면 돈으로 표시합니다. 후원은 채팅창에 분홍 줄로 들어가고, '후원 알림 자리' 스티커가 있으면 플랫폼 모양의 후원창이 튀어나옵니다. 순위판과 목표 게이지도 따라 올라갑니다. 후원자 닉과 메시지는 대사 탭의 목록에서 뽑습니다.</p>
+          <p class="hint">단위는 플랫폼을 바꾸면 그 플랫폼 기본값으로 바뀌고, 직접 고칠 수 있습니다. '하트' · '별풍선' 처럼 개수로, '₩' · '$' · '원' 이면 돈으로 표시합니다. 후원은 채팅창에 분홍 줄로 들어가고, '후원 알림 자리' 스티커가 있으면 플랫폼 모양의 후원창이 튀어나옵니다. 순위판과 목표 게이지도 따라 올라갑니다. 후원자 닉과 메시지는 대사 탭의 목록에서 뽑습니다.</p>
         </div>
         <div class="card">
           <h3>스티커</h3>

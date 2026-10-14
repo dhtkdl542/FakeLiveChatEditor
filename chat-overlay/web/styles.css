@@ -53,6 +53,8 @@ input[type="file"] { color: var(--muted); font-size: 12px; width: 100%; }
 .field { display: block; margin-bottom: 10px; }
 .field > span { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; font-weight: 600; font-size: 12px; }
 .field > span i, h4 i { color: var(--muted); font-style: normal; font-weight: 400; }
+h4 i { margin-left: 6px; }
+.templates .inline select { width: 190px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
 .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 10px; }
 .font-row { display: grid; grid-template-columns: 1fr 64px; gap: 6px; }

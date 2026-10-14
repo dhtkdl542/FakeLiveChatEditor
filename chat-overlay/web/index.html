@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>가짜 라이브 채팅</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="dot"></span>
+    <b>가짜 라이브 채팅</b>
+    <span class="muted" id="videoMeta">영상 없이 샘플 화면으로 보는 중</span>
+  </div>
+  <div class="top-actions">
+    <button type="button" class="btn" id="btnPick">영상 불러오기</button>
+    <button type="button" class="btn primary" id="btnRender">mp4로 저장</button>
+  </div>
+</header>
+<p class="status export-status" id="exportStatus"></p>
+
+<main class="workspace">
+  <!-- 왼쪽: 미리보기 · 타임라인 · 구간 -->
+  <section class="stage-col">
+    <div class="card stage-card">
+      <div class="stage-box" id="stageBox">
+        <div class="stage" id="stage">
+          <video id="video" playsinline preload="auto"></video>
+          <div class="layer" id="stickers"></div>
+          <div class="overlay" id="overlay"></div>
+          <div class="layer" id="alerts"></div>
+          <div class="layer" id="stickerHit"></div>
+          <span class="badge" id="stageBadge">샘플 화면</span>
+        </div>
+      </div>
+      <div class="transport">
+        <button type="button" class="btn icon" id="btnPlay" title="재생 / 멈춤 (스페이스바)">▶</button>
+        <span class="time" id="timeText">0:00.0 / 1:00.0</span>
+        <span class="muted" id="speedText"></span>
+        <span class="spacer"></span>
+        <button type="button" class="btn ghost" id="btnReshuffle" title="같은 설정으로 채팅 순서와 간격만 새로 뽑습니다">순서 다시 섞기</button>
+      </div>
+      <canvas class="timeline" id="timeline"></canvas>
+      <div class="sections-head">
+        <h3>구간별 속도</h3>
+        <button type="button" class="btn ghost small" id="btnAddSection">지금 위치에 구간 추가</button>
+      </div>
+      <p class="hint">타임라인을 <b>드래그</b>하면 그 구간만 채팅을 빠르게 하거나 느리게 할 수 있고, <b>클릭</b>하면 그 위치로 이동합니다. 구간 경계는 부드럽게 이어집니다.</p>
+      <div class="sec-list" id="sections"></div>
+    </div>
+  </section>
+
+  <!-- 오른쪽: 설정 탭 -->
+  <aside class="panel-col">
+    <nav class="tabs" id="tabs">
+      <button type="button" data-tab="style" class="active">스타일</button>
+      <button type="button" data-tab="timing">타이밍</button>
+      <button type="button" data-tab="lines">대사<i class="new-dot" id="linesDot"></i></button>
+      <button type="button" data-tab="deco">꾸미기</button>
+      <button type="button" data-tab="ai">AI <small>선택</small></button>
+    </nav>
+
+    <div class="panels" id="form">
+      <!-- 스타일 -->
+      <section class="panel active" data-panel="style">
+        <div class="card">
+          <h3>글꼴</h3>
+          <p class="hint">시스템 글꼴 이름을 적거나 ttf를 올리면 미리보기와 결과 영상에 쓰입니다.</p>
+          <div class="grid2">
+            <label class="field"><span>닉네임 글꼴</span>
+              <div class="font-row"><input list="fontList" data-field="nickFont" value="Malgun Gothic"><input type="number" data-field="nickSize" value="20" min="8" max="120" title="크기"></div></label>
+            <label class="field"><span>대화 글꼴</span>
+              <div class="font-row"><input list="fontList" data-field="msgFont" value="Malgun Gothic"><input type="number" data-field="msgSize" value="18" min="8" max="120" title="크기"></div></label>
+            <label class="field"><span>닉네임 ttf (선택)</span><input type="file" id="nickTtf" accept=".ttf,.otf,.woff,.woff2"></label>
+            <label class="field"><span>대화 ttf (선택)</span><input type="file" id="msgTtf" accept=".ttf,.otf,.woff,.woff2"></label>
+          </div>
+          <datalist id="fontList"></datalist>
+          <div class="row-actions">
+            <button type="button" class="btn ghost small" id="btnFonts">시스템 글꼴 불러오기</button>
+            <span class="status" id="fontStatus">맑은 고딕이 기본입니다.</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>위치 · 줄</h3>
+          <div class="grid3">
+            <label class="field"><span>정렬</span><select data-field="align"><option value="right" selected>오른쪽 아래</option><option value="left">왼쪽 아래</option></select></label>
+            <label class="field"><span>옆 여백 <i>px</i></span><input type="number" data-field="sideMargin" value="24" min="0" max="2000"></label>
+            <label class="field"><span>아래 여백 <i>px</i></span><input type="number" data-field="bottomMargin" value="24" min="0" max="2000"></label>
+            <label class="field"><span>줄 간격 <i>px</i></span><input type="number" data-field="lineH" value="36" min="10" max="200"></label>
+            <label class="field"><span>보일 줄 수</span><input type="number" data-field="visible" value="8" min="1" max="40"></label>
+            <label class="field"><span>한 줄 글자 수</span><input type="number" data-field="maxChars" value="22" min="4" max="80"></label>
+            <label class="field"><span>위쪽 흐림</span><input type="number" data-field="fadeUp" value="18" min="0" max="100"></label>
+          </div>
+          <div class="wrap-demo" id="wrapDemo"></div>
+          <p class="hint">여백은 화면 가장자리에서 채팅(박스)까지의 거리이고, 크기는 모두 영상 해상도 기준 px 입니다.</p>
+        </div>
+
+        <div class="card">
+          <h3>채팅 모양</h3>
+          <div class="presets" id="presets"></div>
+          <div class="grid3">
+            <label class="field"><span>대사 색</span><input type="color" data-field="msgColor" value="#ffffff"></label>
+            <label class="field check"><input type="checkbox" data-field="nickBold"><span>닉네임 굵게</span></label>
+            <label class="field"><span>글자 테두리 <i>px</i></span><input type="number" data-field="outline" value="2" min="0" max="20"></label>
+          </div>
+          <h4>배경 박스</h4>
+          <div class="grid3">
+            <label class="field check"><input type="checkbox" data-field="box"><span>채팅마다 박스</span></label>
+            <label class="field"><span>박스 색</span><input type="color" data-field="boxColor" value="#000000"></label>
+            <label class="field"><span>안쪽 여백 <i>px</i></span><input type="number" data-field="boxPadding" value="6" min="0" max="60"></label>
+          </div>
+          <label class="field"><span>박스 불투명도 <i data-show="boxOpacity" data-unit="%"></i></span><input type="range" data-field="boxOpacity" value="45" min="0" max="100"></label>
+          <h4>닉네임 앞 아이콘</h4>
+          <div class="grid3">
+            <label class="field"><span>모양</span><select data-field="icon" id="iconSelect"><option value="">없음</option></select></label>
+            <label class="field check"><input type="checkbox" data-field="iconFollowNick" checked><span>닉 색 따라가기</span></label>
+            <label class="field"><span>아이콘 색</span><input type="color" data-field="iconColor" value="#ff4d6d"></label>
+          </div>
+          <label class="field"><span>아이콘 크기 <i data-show="iconScale" data-unit="%"></i></span><input type="range" data-field="iconScale" value="100" min="30" max="200"></label>
+          <p class="hint">박스를 켜면 글자 테두리 대신 박스가 그려집니다. 박스와 아이콘은 결과 영상에도 똑같이 들어갑니다.</p>
+        </div>
+      </section>
+
+      <!-- 타이밍 -->
+      <section class="panel" data-panel="timing">
+        <div class="card">
+          <h3>기본 간격</h3>
+          <div class="grid3">
+            <label class="field"><span>첫 채팅 <i>초</i></span><input type="number" data-field="chatStart" value="0.5" min="0" step="0.1"></label>
+            <label class="field"><span>최소 간격 <i>초</i></span><input type="number" data-field="intMin" value="0.25" min="0.05" step="0.05"></label>
+            <label class="field"><span>최대 간격 <i>초</i></span><input type="number" data-field="intMax" value="0.70" min="0.05" step="0.05"></label>
+            <label class="field"><span>등장 디졸브 <i>ms</i></span><input type="number" data-field="fadeIn" value="180" min="0" max="3000"></label>
+            <label class="field"><span>사라짐 디졸브 <i>ms</i></span><input type="number" data-field="fadeOut" value="450" min="0" max="3000"></label>
+          </div>
+        </div>
+        <div class="card">
+          <h3>전체 출렁임</h3>
+          <p class="hint">영상 전체에서 채팅 속도가 저절로 빨라졌다 느려졌다 합니다. 0%면 일정한 속도, 100%면 1/4배~4배를 오갑니다. 특정 구간만 바꾸려면 왼쪽 타임라인을 드래그하세요.</p>
+          <label class="field"><span>변화 폭 <i data-show="speedVar" data-unit="%"></i></span><input type="range" data-field="speedVar" value="50" min="0" max="100"></label>
+          <label class="field"><span>변화 주기 <i data-show="speedPeriod" data-unit="초"></i></span><input type="range" data-field="speedPeriod" value="8" min="2" max="40"></label>
+          <button type="button" class="btn ghost small" id="btnReroll">출렁임 패턴 새로 뽑기</button>
+        </div>
+      </section>
+
+      <!-- 대사 -->
+      <section class="panel" data-panel="lines">
+        <div class="card">
+          <h3>닉네임 · 대사</h3>
+          <p class="hint">한 줄에 하나씩 직접 적으면 됩니다. AI 탭에서 만든 대사도 여기로 들어오고, 들어온 뒤 자유롭게 고칠 수 있습니다.</p>
+          <div class="grid2">
+            <label class="field"><span>닉네임</span><textarea data-field="nicks" rows="12">쎾써
+의슬챈러
+젖킬러
+사드후장
+ㅇㅇ
+뷰럴러버
+떡쟁이
+남페미07
+검열병신
+뗶띄트립
+불편러
+개씹썬비
+툭하면불편질</textarea></label>
+            <label class="field"><span>대사</span><textarea data-field="msgs" rows="12">ㅋㅋㅋㅋ
+5000원 무시하나
+초심잃었네
+지금 뭐함?
+검열인데 이거
+뭘 자꾸 검열이래 ㅂㅅㅋㅋ
+존나 맛있을듯
+오늘은 이거다
+비키니가 안되면 ㅅㅂ ㅋㅋ 이슬람이냐
+실화냐</textarea></label>
+          </div>
+        </div>
+        <div class="card">
+          <h3>닉네임 색</h3>
+          <div class="swatches" id="swatches"></div>
+          <div class="colors" id="colors"></div>
+          <div class="row-actions">
+            <button type="button" class="btn ghost small" id="btnAddColor">색 추가</button>
+            <button type="button" class="btn ghost small" id="btnFitColors">닉 수만큼 채우기</button>
+            <button type="button" class="btn ghost small" id="btnRandomColors">전부 랜덤</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 꾸미기 -->
+      <section class="panel" data-panel="deco">
+        <div class="card">
+          <h3>템플릿</h3>
+          <p class="hint">셋은 따로 고릅니다. 플랫폼은 후원 단위 · 금액 · 후원창 모양을, 방송 템플릿은 스티커 배치를, 채팅창 템플릿은 채팅 줄 모양을 정합니다.</p>
+          <label class="field"><span>플랫폼 <i>후원 단위 · 후원창</i></span><select data-field="platform" id="platformSelect"></select></label>
+          <p class="status" id="platformNote"></p>
+          <h4>방송 템플릿 <i>스티커 배치 · 후원 빈도</i></h4>
+          <div class="inline"><select id="templateSelect"></select><button type="button" class="btn primary small" id="btnApplyTemplate">적용</button></div>
+          <p class="status" id="templateNote"></p>
+          <h4>채팅창 템플릿 <i>채팅 줄 모양 · 배치</i></h4>
+          <div class="inline"><select id="chatTemplateSelect"></select><button type="button" class="btn primary small" id="btnApplyChatTemplate">적용</button></div>
+          <p class="status" id="chatTemplateNote"></p>
+          <div class="row-actions"><button type="button" class="btn ghost small" id="btnClearStickers">스티커 모두 지우기</button></div>
+        </div>
+        <div class="card">
+          <h3>가짜 후원</h3>
+          <div class="grid3">
+            <label class="field check"><input type="checkbox" data-field="donationsOn"><span>후원 켜기</span></label>
+            <label class="field"><span>평균 간격 <i>초</i></span><input type="number" data-field="donationEvery" value="15" min="1" max="600"></label>
+            <label class="field"><span>단위 <i>플랫폼을 바꾸면 따라 바뀜</i></span><input type="text" data-field="donationUnit" value="하트" placeholder="비우면 플랫폼 단위"></label>
+          </div>
+          <label class="field"><span>금액 목록 <i>작은 금액이 더 자주 나옵니다</i></span><input type="text" data-field="donationAmounts" value="10, 30, 50, 100, 300, 550, 1000"></label>
+          <label class="field"><span>메시지 붙일 확률 <i data-show="donationMsgChance" data-unit="%"></i></span><input type="range" data-field="donationMsgChance" value="40" min="0" max="100"></label>
+          <p class="hint">단위는 '하트' · '별풍선' 처럼 개수로, '₩' · '$' · '원' 이면 돈으로 표시합니다. 후원은 채팅창에 분홍 줄로 들어가고, '후원 알림 자리' 스티커가 있으면 플랫폼 모양의 후원창이 튀어나옵니다. 순위판과 목표 게이지도 따라 올라갑니다. 후원자 닉과 메시지는 대사 탭의 목록에서 뽑습니다.</p>
+        </div>
+        <div class="card">
+          <h3>스티커</h3>
+          <div class="row-actions" id="stickerAdd"></div>
+          <div class="sticker-list" id="stickerList"></div>
+          <div class="sticker-editor" id="stickerEditor"></div>
+        </div>
+      </section>
+
+      <!-- AI -->
+      <section class="panel" data-panel="ai">
+        <div class="card">
+          <h3>AI 모델 준비 (Ollama)</h3>
+          <p class="status" id="olStatus">Ollama 상태 확인 중...</p>
+          <div class="row-actions">
+            <button type="button" class="btn ghost small" id="btnOlInstall">Ollama 설치</button>
+            <button type="button" class="btn ghost small" id="btnOlStart">지금 켜기 (창 없음)</button>
+            <button type="button" class="btn ghost small" id="btnOlRefresh">새로고침</button>
+          </div>
+          <div class="job" id="olJob" hidden>
+            <div class="progress"><div id="olBar"></div></div>
+            <div class="job-row"><span class="status" id="olJobText"></span><button type="button" class="btn ghost small" id="btnOlCancel">취소</button></div>
+          </div>
+          <p class="hint"><b>검열 해제</b> 모델은 거친 말투나 수위 있는 드립도 거절하지 않고 씁니다. 저사양 PC라면 AI 없이 대사 탭에 직접 적어도 됩니다.</p>
+          <div class="model-list" id="olCatalog"></div>
+          <label class="field"><span>다른 모델 직접 받기 <i>ollama.com 의 이름</i></span>
+            <div class="inline"><input type="text" id="olCustom" placeholder="예: huihui_ai/qwen3.5-abliterated:4B"><button type="button" class="btn ghost small" id="btnOlPull">받기</button></div></label>
+          <h4>설치된 모델</h4>
+          <div class="model-list" id="olInstalled"></div>
+        </div>
+        <div class="card">
+          <h3>AI로 대사 만들기</h3>
+          <label class="field"><span>서버</span>
+            <div class="inline"><select id="llmPreset"><option value="http://127.0.0.1:11434/v1">Ollama</option><option value="http://127.0.0.1:1234/v1">LM Studio</option><option value="">직접 입력</option></select><input type="text" id="llmBase" value="http://127.0.0.1:11434/v1"></div></label>
+          <label class="field"><span>모델 <i>위에서 [사용]을 누르면 자동으로 들어감</i></span>
+            <div class="inline"><input list="modelList" id="llmModel" placeholder="모델 이름"><button type="button" class="btn ghost small" id="btnModels">불러오기</button></div></label>
+          <datalist id="modelList"></datalist>
+          <label class="field"><span>주제 · 분위기</span><textarea id="llmPrompt" rows="4" placeholder="예: 먹방 중에 매운 라면 먹다가 사레들린 상황. 시청자들은 걱정 반 놀림 반, 후원 드립도 섞어서"></textarea></label>
+          <div class="opts">
+            <label>대사 <input type="number" id="llmCount" value="35" min="5" max="100"> 개</label>
+            <label><input type="checkbox" id="llmNicks"> 닉네임도 <input type="number" id="llmNickCount" value="12" min="1" max="50"> 개</label>
+            <label><input type="radio" name="llmMode" value="replace" checked> 바꾸기</label>
+            <label><input type="radio" name="llmMode" value="append"> 뒤에 추가</label>
+          </div>
+          <label class="field"><span>창의성 <i id="llmTempVal"></i></span><input type="range" id="llmTemp" value="0.9" min="0.2" max="1.5" step="0.1"></label>
+          <button type="button" class="btn primary" id="btnGenerate">대사 생성</button>
+          <p class="status" id="llmStatus">모델이 클수록 말투는 자연스럽지만 느립니다.</p>
+        </div>
+      </section>
+    </div>
+  </aside>
+</main>
+
+<script>
+  window.addEventListener("error", e => { document.body.dataset.error = e.message; });
+  window.addEventListener("unhandledrejection", e => { document.body.dataset.error = String(e.reason); });
+</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

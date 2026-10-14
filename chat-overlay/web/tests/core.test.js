@@ -34,6 +34,19 @@ test("SpeedCurve: 구간이 출렁임에 곱해진다", () => {
 const cfg = { NICKS: ["a", "b"], MSGS: ["x", "y"], COLORS: ["#ff0000"], CHAT_START: 0.5, INTERVAL_MIN: 0.25,
   INTERVAL_MAX: 0.7, SPEED_VAR: 0, SPEED_PERIOD: 8, SPEED_PHASES: [0, 0, 0], SPEED_SECTIONS: [] };
 
+test("EventGenerator: 순서 옵션은 대사를 반복하며 간격은 랜덤으로 유지", () => {
+  for (const seed of [1, 42]) {
+    const events = EventGenerator.fromSettings({ ...cfg, MSGS: ["첫째", "둘째", "셋째"], MSGS_IN_ORDER: true }, seed).generate(10);
+    assert.ok(events.length > 6);
+    events.forEach((e, i) => assert.equal(e.msg, ["첫째", "둘째", "셋째"][i % 3]));
+    const gaps = events.slice(1).map((e, i) => Math.round((e.t - events[i].t) * 1000));
+    assert.ok(new Set(gaps).size > 1);
+    assert.ok(gaps.every(g => g >= 250 && g <= 720));
+  }
+  const cache = new EventCache();
+  assert.notEqual(cache.get(cfg, 1, 10), cache.get({ ...cfg, MSGS_IN_ORDER: true }, 1, 10));
+});
+
 test("EventGenerator: 목록이 비면 빈 타임라인", () => {
   assert.deepEqual(EventGenerator.fromSettings({ ...cfg, MSGS: [] }, 1).generate(10), []);
 });

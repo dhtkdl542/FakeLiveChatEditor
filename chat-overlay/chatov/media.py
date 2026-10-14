@@ -148,6 +148,7 @@ class OverlayRenderer:
             interval_min=float(settings.get("INTERVAL_MIN", 0.25)),
             interval_max=float(settings.get("INTERVAL_MAX", 0.7)),
             rng=rng,
+            msgs_in_order=settings.get("MSGS_IN_ORDER") is True,
         ).generate(duration)
         unit = settings.get("DONATION_UNIT") or "하트"
         return merge_into_chat(chat, donations, settings.get("COLORS") or [], unit) if donations else chat

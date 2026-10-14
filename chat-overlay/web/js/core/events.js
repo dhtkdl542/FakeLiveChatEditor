@@ -30,10 +30,11 @@ export class ShuffledCycle {
 export class EventGenerator {
   static STEP = 0.02;  // 속도 곡선을 적분하는 시간 간격(초)
 
-  constructor({ curve, nicks, msgs, palette, start, intervalMin, intervalMax, rng }) {
+  constructor({ curve, nicks, msgs, palette, start, intervalMin, intervalMax, rng, msgsInOrder = false }) {
     this.curve = curve;
     this.nicks = nicks;
     this.msgs = msgs;
+    this.msgsInOrder = msgsInOrder;
     this.palette = palette;
     this.start = start;
     this.lo = intervalMin;
@@ -49,6 +50,7 @@ export class EventGenerator {
       intervalMin: Number(cfg.INTERVAL_MIN ?? 0.25),
       intervalMax: Number(cfg.INTERVAL_MAX ?? 0.7),
       rng: new Mulberry32(seed),
+      msgsInOrder: cfg.MSGS_IN_ORDER === true,
     });
   }
 
@@ -62,7 +64,8 @@ export class EventGenerator {
     let t = this.start;
     while (t < duration - END_MARGIN) {
       const nick = nicks.next();
-      events.push(Object.freeze({ t: Math.round(t * 1000) / 1000, nick, msg: msgs.next(), color: colorForNick(nick, this.palette) }));
+      const msg = this.msgsInOrder ? this.msgs[events.length % this.msgs.length] : msgs.next();
+      events.push(Object.freeze({ t: Math.round(t * 1000) / 1000, nick, msg, color: colorForNick(nick, this.palette) }));
       let need = this.rng.uniform(this.lo, this.hi);
       while (need > 0 && t < duration) {
         need -= this.curve.at(t) * step;
@@ -83,7 +86,7 @@ export class EventCache {
 
   static keyOf(cfg, seed, len) {
     return JSON.stringify([len, seed, cfg.CHAT_START, cfg.INTERVAL_MIN, cfg.INTERVAL_MAX, cfg.SPEED_VAR,
-      cfg.SPEED_PERIOD, cfg.SPEED_PHASES, cfg.SPEED_SECTIONS, cfg.NICKS, cfg.MSGS, cfg.COLORS]);
+      cfg.SPEED_PERIOD, cfg.SPEED_PHASES, cfg.SPEED_SECTIONS, cfg.NICKS, cfg.MSGS, cfg.COLORS, cfg.MSGS_IN_ORDER]);
   }
 
   get(cfg, seed, len) {

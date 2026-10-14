@@ -50,10 +50,11 @@ class EventGenerator:
 
     def __init__(self, curve: Callable[[float], float], nicks: Sequence[str], msgs: Sequence[str],
                  palette: Sequence[str], start: float, interval_min: float, interval_max: float,
-                 rng: Mulberry32):
+                 rng: Mulberry32, msgs_in_order: bool = False):
         self._curve = curve
         self._nicks = ShuffledCycle(nicks, rng)
         self._msgs = ShuffledCycle(msgs, rng)
+        self._ordered_msgs = list(msgs) if msgs_in_order else None
         self._palette = list(palette)
         self._start = float(start)
         self._lo = float(interval_min)
@@ -66,7 +67,9 @@ class EventGenerator:
         t = self._start
         while t < duration - END_MARGIN:
             nick = self._nicks.next()
-            events.append(ChatEvent(round_ms(t), nick, self._msgs.next(), color_for_nick(nick, self._palette)))
+            msg = (self._ordered_msgs[len(events) % len(self._ordered_msgs)]
+                   if self._ordered_msgs is not None else self._msgs.next())
+            events.append(ChatEvent(round_ms(t), nick, msg, color_for_nick(nick, self._palette)))
             need = self._rng.uniform(self._lo, self._hi)
             while need > 0 and t < duration:
                 need -= self._curve(t) * self.STEP

@@ -52,7 +52,7 @@ export class Settings {
     "outline", "box", "boxColor", "boxOpacity", "boxPadding", "icon", "iconFollowNick", "iconColor", "iconScale",
     "boxShape", "boxRadius", "boxBorder", "boxBorderColor", "badgesOn", "badgeOverrides",
     ...DEFAULT_BADGES.flatMap(b => ["Icon", "Color", "Share"].map(part => `badge${cap(b.key)}${part}`)),
-    "nicks", "msgs", "platform", "donationsOn", "donationEvery", "donationAmounts", "donationMsgChance", "donationUnit",
+    "nicks", "msgs", "msgsInOrder", "platform", "donationsOn", "donationEvery", "donationAmounts", "donationMsgChance", "donationUnit",
   ]);
 
   static #num(raw, key, { min = -Infinity, max = Infinity, int = false } = {}) {
@@ -107,6 +107,7 @@ export class Settings {
       BADGE_OVERRIDES: parseBadgeOverrides(raw.badgeOverrides, badges),
       NICKS: linesOf(raw.nicks),
       MSGS: linesOf(raw.msgs),
+      MSGS_IN_ORDER: bool(raw.msgsInOrder),
       COLORS: [...colors],
       DONATIONS_ON: bool(raw.donationsOn),
       DONATION_EVERY: n("donationEvery", { min: 1 }),

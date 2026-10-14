@@ -25,6 +25,18 @@ class ShuffledCycleTest(unittest.TestCase):
 
 
 class EventGeneratorTest(unittest.TestCase):
+    def test_ordered_messages_repeat_with_random_gaps(self):
+        for seed in (1, 42):
+            events = EventGenerator(curve=FLAT, nicks=["a", "b"], msgs=["첫째", "둘째", "셋째"],
+                                    palette=["#ff0000"], start=0.5, interval_min=0.25,
+                                    interval_max=0.7, rng=Mulberry32(seed), msgs_in_order=True).generate(10)
+            self.assertGreater(len(events), 6)
+            self.assertEqual([e.msg for e in events],
+                             [["첫째", "둘째", "셋째"][i % 3] for i in range(len(events))])
+            gaps = [round(b.t - a.t, 3) for a, b in zip(events, events[1:])]
+            self.assertGreater(len(set(gaps)), 1)
+            self.assertTrue(all(0.25 <= gap <= 0.72 for gap in gaps))
+
     def test_same_seed_same_timeline(self):
         self.assertEqual(make_gen(9).generate(30), make_gen(9).generate(30))
 

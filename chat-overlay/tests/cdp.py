@@ -69,8 +69,9 @@ class Page:
         raise TimeoutError(expr)
 
     async def screenshot_element(self, selector, out_width) -> bytes:
+        # 캡처 좌표는 문서 기준이라 스크롤한 만큼 더한다
         rect = await self.js(f"(() => {{ const r = document.querySelector('{selector}').getBoundingClientRect(); "
-                             f"return [r.left, r.top, r.width, r.height]; }})()")
+                             f"return [r.left + scrollX, r.top + scrollY, r.width, r.height]; }})()")
         data = await self.cmd("Page.captureScreenshot", format="png", clip={
             "x": rect[0], "y": rect[1], "width": rect[2], "height": rect[3], "scale": out_width / rect[2]})
         return base64.b64decode(data["data"])

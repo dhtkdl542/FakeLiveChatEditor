@@ -151,6 +151,11 @@ async def main():
         frame = OUT / "result-frame.png"
         subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", str(at), "-i", str(result), "-frames:v", "1", str(frame)],
                        check=True)
+        async with await shooter.scene(chat_template("pill") + apply_template("panda"), tab="style") as p:
+            shots["chat-pill.png"] = await p.screenshot_element("#stage", W)
+            await p.js("document.querySelector('#badgeCard').scrollIntoView()")
+            await asyncio.sleep(0.3)
+            shots["badges.png"] = await p.screenshot_element("#badgeCard", 520)
         async with await shooter.scene("", at_js="0", tab="ai") as p:
             shots["ai.png"] = await p.screenshot_element("[data-panel=ai] .card", 520)
 

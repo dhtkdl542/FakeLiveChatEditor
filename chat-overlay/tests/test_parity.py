@@ -176,6 +176,30 @@ class PreviewMatchesRenderTest(unittest.TestCase):
                                       " s.value = 'afreeca'; s.onchange(); })(); document.querySelector('#btnApplyTemplate').click()",
                      self.LONE_MSG_DONATION, crop=ALERT_CROP, src=self.long_src)
 
+    @staticmethod
+    def _fields(**fields):
+        """입력칸 여러 개를 바꾸는 JS (FormView 처럼 input 이벤트를 낸다)."""
+        sets = "".join(f"f({k!r}, {v!r});" for k, v in fields.items())
+        return ("(() => { const f = (k, v) => { const e = document.querySelector(`[data-field=${k}]`);"
+                " if (e.type === 'checkbox') e.checked = v === '1'; else e.value = v;"
+                " e.dispatchEvent(new Event('input', { bubbles: true })); };" + sets + " })()")
+
+    # 박스 모양을 비교하는 테스트라, 줄이 나타나거나(0.18초) 사라지는(0.45초) 중이 아닌 순간을 고른다.
+    # 그동안은 프레임 한 칸(1/30초)만 어긋나도 흐림 정도가 달라진다. 3초 뒤에서 채팅 사이가 가장 긴 곳의 가운데.
+    STEADY = ("(() => { const e = window.__chatApp.preview.events(); let best = 6, gap = -1;"
+              " for (let i = 0; i + 1 < e.length; i++) { const g = e[i + 1].t - e[i].t;"
+              "   if (e[i].t > 3 && g > gap) { gap = g; best = (e[i].t + 0.18 + e[i + 1].t - 0.45) / 2; } }"
+              " return best; })()")
+
+    def test_rounded_box_with_border_and_badges(self):
+        # 배지를 모두에게 나눠 줘서(비율 합 100%) 모든 첫 줄에 배지가 그려지게 한다
+        self.compare("rounded_border", self._fields(
+            box="1", boxShape="rounded", boxRadius="12", boxBorder="2", boxBorderColor="#ff5fa2", boxOpacity="70",
+            badgesOn="1", badgeManagerShare="30", badgeFanShare="30", badgeSubShare="40", icon="circle"), self.STEADY)
+
+    def test_pill_box(self):
+        self.compare("pill", "document.querySelectorAll('#presets button')[7].click()", self.STEADY)  # 알약 박스
+
     def test_youtube_chat_template(self):
         self.compare("chat_youtube", "(() => { document.querySelector('#chatTemplateSelect').value = 'youtube';"
                                      " document.querySelector('#btnApplyChatTemplate').click(); })()")

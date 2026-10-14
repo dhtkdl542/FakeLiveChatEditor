@@ -1,8 +1,8 @@
 // 닉네임 앞 아이콘. chatov/icons.py 와 같은 모양(ASS 드로잉 문법)을 같은 방식으로 정규화해 SVG 로 그린다.
-export const ICON_NAMES = ["circle", "rounded", "heart", "star", "crown", "diamond"];
+export const ICON_NAMES = ["circle", "rounded", "heart", "star", "crown", "diamond", "shield"];
 
 export const ICON_LABELS = {
-  circle: "● 원", rounded: "■ 둥근 사각", heart: "♥ 하트", star: "★ 별", crown: "♛ 왕관", diamond: "◆ 다이아",
+  circle: "● 원", rounded: "■ 둥근 사각", heart: "♥ 하트", star: "★ 별", crown: "♛ 왕관", diamond: "◆ 다이아", shield: "⛨ 방패",
 };
 
 const RAW = {
@@ -14,6 +14,7 @@ const RAW = {
   star: "m 50 0 l 61.8 35.4 99 35.4 69.1 57.3 80.3 92.7 50 70.8 19.7 92.7 30.9 57.3 1 35.4 38.2 35.4",
   crown: "m 0 85 l 0 25 27 50 50 10 73 50 100 25 100 85",
   diamond: "m 50 0 l 100 50 50 100 0 50",
+  shield: "m 50 0 l 100 14 l 100 48 b 100 76 78 94 50 100 b 22 94 0 76 0 48 l 0 14 l 50 0",
 };
 
 const TOKEN = /[mlb]|-?\d+(?:\.\d+)?/g;

@@ -54,7 +54,7 @@ export class StageView {
   #line(row, layout, frame, now, width, height, k) {
     const s = layout.style;
     const { x, y, align } = layout.position(row, width, height);
-    const { textOpacity, background } = layout.paint(row);
+    const { textOpacity, background, radius, border } = layout.paint(row);
     const nickPx = cssFontPx(s.nickSize, this.metrics.lineRatio(s.nickFont)) * k;
     const msgPx = cssFontPx(s.msgSize, this.metrics.lineRatio(s.msgFont)) * k;
     const nickFont = `"${s.nickFont}", "Malgun Gothic", sans-serif`;
@@ -71,6 +71,9 @@ export class StageView {
       opacity: String(layout.fade(row, now, frame.startT, frame.nextT)),
       background: background || "transparent",
       padding: pad * k + "px",
+      // 둥근 · 알약 박스와 테두리: 결과 영상도 같은 크기의 도형을 박스 안쪽 테두리로 그린다
+      borderRadius: radius * k + "px",
+      boxShadow: border ? `inset 0 0 0 ${border.width * k}px ${border.color}` : "none",
     } });
     // 박스가 없으면 libass 처럼 매끈한 바깥 테두리 (선은 가운데 기준이라 두 배 굵기로, 채움 아래에)
     const outlinePx = background ? 0 : s.outline * k;
@@ -82,8 +85,10 @@ export class StageView {
     } }, content);
 
     if (row.nick) {
-      if (iconShape(s.icon)) {
-        const icon = iconSvg(s.icon, layout.iconSize() * k, s.iconColor || row.color, outlinePx);
+      // 공통 아이콘 다음에 닉네임 배지 (같은 닉은 늘 같은 배지)
+      for (const [name, color] of s.icons(row)) {
+        if (!iconShape(name)) continue;
+        const icon = iconSvg(name, layout.iconSize() * k, color, outlinePx);
         icon.style.opacity = String(textOpacity);
         line.append(icon, text(" ", msgFont, msgPx, "#fff", false));
       }

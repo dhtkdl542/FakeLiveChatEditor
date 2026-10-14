@@ -1,7 +1,10 @@
 import dataclasses
 import unittest
 
-from chatov.ass import AssWriter, ChatLayout, OverlayStyle, ass_time, escape_ass
+from chatov.ass import AssWriter, ChatLayout, OverlayStyle, ass_time, escape_ass, row_key
+from chatov.badges import Badge
+from chatov.icons import icon_drawing
+from chatov.shapes import ring_drawing, rounded_rect_drawing
 from chatov.timeline import ChatEvent
 
 STYLE = OverlayStyle(align="right", side_margin=24, bottom_margin=24, line_h=30, visible=3, fade_in_ms=180,
@@ -198,6 +201,115 @@ class AssWriterTest(unittest.TestCase):
         line = self.dialogues(self.build([ev(0, msg=r"{\b1}x")]))[0]
         self.assertNotIn(r"{\b1}x", line)
         self.assertIn("｛＼b1｝x", line)
+
+
+def dialogues(text):
+    return [line for line in text.splitlines() if line.startswith("Dialogue:")]
+
+
+MANAGER = Badge("manager", "매니저", "shield", "#22c55e", 1.0)
+
+
+class OverlayStyleShapeAndBadgeTest(unittest.TestCase):
+    def test_reads_box_shape_border_and_badges(self):
+        s = OverlayStyle.from_settings({"BOX_SHAPE": "pill", "BOX_RADIUS": 10, "BOX_BORDER": 2, "BOX_BORDER_COLOR": "#ff0000",
+                                        "BADGES_ON": True, "BADGE_OVERRIDES": {"코코넛": "sub"},
+                                        "BADGES": [{"key": "manager", "label": "매니저", "icon": "crown",
+                                                    "color": "#123456", "share": 0.5}]})
+        self.assertEqual((s.box_shape, s.box_radius, s.box_border, s.box_border_color), ("pill", 10, 2, "#ff0000"))
+        self.assertEqual((s.badges_on, s.badge_overrides), (True, {"코코넛": "sub"}))
+        self.assertEqual(s.badges, (Badge("manager", "매니저", "crown", "#123456", 0.5),))
+
+    def test_defaults_keep_the_old_look(self):
+        s = OverlayStyle.from_settings({"BOX_SHAPE": "별모양"})
+        self.assertEqual((s.box_shape, s.box_border, s.badges_on), ("square", 0, False))
+
+
+class BadgeRowTest(unittest.TestCase):
+    def build(self, events, **kw):
+        return dialogues(AssWriter(1000, 600, style(**kw)).build(events, 4))
+
+    def test_badge_is_drawn_before_nick_in_badge_color(self):
+        line = self.build([ev(0, nick="닉")], badges_on=True, badges=(MANAGER,))[0]
+        self.assertIn(r"{\c&H5EC522&\p3}" + icon_drawing("shield", 16) + r"{\p0} ", line)
+        self.assertLess(line.index(r"\p3"), line.index("닉"))
+
+    def test_badges_off_draws_nothing(self):
+        self.assertNotIn(r"\p3", self.build([ev(0)], badges_on=False, badges=(MANAGER,))[0])
+
+    def test_global_icon_comes_first_then_badge(self):
+        line = self.build([ev(0, nick="닉")], icon="circle", badges_on=True, badges=(MANAGER,))[0]
+        self.assertLess(line.index(icon_drawing("circle", 16)), line.index(icon_drawing("shield", 16)))
+
+    def test_manual_no_badge(self):
+        line = self.build([ev(0, nick="닉")], badges_on=True, badges=(MANAGER,), badge_overrides={"닉": ""})[0]
+        self.assertNotIn(r"\p3", line)
+
+    def test_continuation_piece_has_no_badge(self):
+        lines = self.build([ev(0, nick="닉", msg="가나다라마바사")], badges_on=True, badges=(MANAGER,))
+        self.assertNotIn(r"\p3", lines[1])
+
+
+class ShapedBoxTest(unittest.TestCase):
+    """둥근 · 알약 박스와 테두리는 브라우저가 잰 줄 폭으로 직접 그린다 (libass 줄 박스는 각진 모양뿐)."""
+    WIDTHS = {row_key("닉", "안녕", False): 100, row_key("닉", "선물", True): 100, row_key("둘", "안녕", False): 50}
+
+    def build(self, events, widths=None, **kw):
+        kw = {"box": True, "box_color": "#102030", "box_opacity": 0.5, **kw}
+        return dialogues(AssWriter(1000, 600, style(**kw), text_widths=self.WIDTHS if widths is None else widths)
+                         .build(events, 4))
+
+    def test_rounded_box_is_a_shape_under_the_text(self):
+        box, text = self.build([ev(0, nick="닉", msg="안녕")], box_shape="rounded", box_radius=8)
+        # 글자 폭 100 + 여백 6×2 = 112, 줄 높이 20 + 6×2 = 32. 글자 오른쪽 아래 (970,570) 에서 여백만큼 바깥이 박스
+        self.assertTrue(box.startswith("Dialogue: 8,0:00:00.00,0:00:04.00,Chat,"))
+        self.assertIn(r"{\an5\pos(920,560)\bord0\shad0\c&H302010&\1a&H80&\fad(180,0)\p3}"
+                      + rounded_rect_drawing(112, 32, 8) + r"{\p0}", box)
+        self.assertTrue(text.startswith("Dialogue: 10,0:00:00.00,0:00:04.00,Chat,"))
+        self.assertIn(r"\an3\pos(970,570)\fad(180,0)\bord0\shad0\1a&H00&}", text)
+        self.assertNotIn(r"\4c", text)
+
+    def test_pill_uses_half_height_radius(self):
+        box = self.build([ev(0, nick="닉", msg="안녕")], box_shape="pill")[0]
+        self.assertIn(rounded_rect_drawing(112, 32, 16), box)
+
+    def test_border_is_a_ring_on_top_of_an_inset_fill(self):
+        fill, ring, _ = self.build([ev(0, nick="닉", msg="안녕")], box_shape="rounded", box_radius=8,
+                                   box_border=2, box_border_color="#ff5fa2")
+        self.assertIn(rounded_rect_drawing(108, 28, 6) + r"{\p0}", fill)
+        self.assertTrue(ring.startswith("Dialogue: 9,"))
+        self.assertIn(r"\c&HA25FFF&\1a&H00&\fad(180,0)\p3}" + ring_drawing(112, 32, 8, 2), ring)
+
+    def test_square_with_border_is_drawn_too(self):
+        fill = self.build([ev(0, nick="닉", msg="안녕")], box_shape="square", box_border=2)[0]
+        self.assertIn(rounded_rect_drawing(108, 28, 0), fill)
+
+    def test_left_aligned_box_grows_to_the_right(self):
+        box = self.build([ev(0, nick="닉", msg="안녕")], box_shape="rounded", align="left")[0]
+        self.assertIn(r"\pos(80,560)", box)
+
+    def test_plain_square_box_keeps_the_libass_box(self):
+        lines = self.build([ev(0, nick="닉", msg="안녕")], box_shape="square")
+        self.assertEqual(len(lines), 1)
+        self.assertIn(",ChatBox,", lines[0])
+
+    def test_row_without_measured_width_falls_back_to_square_box(self):
+        lines = self.build([ev(0, nick="닉", msg="안녕")], widths={}, box_shape="rounded")
+        self.assertEqual(len(lines), 1)
+        self.assertIn(",ChatBox,", lines[0])
+
+    def test_donation_row_uses_highlight_color_and_the_shape(self):
+        box = self.build([ev(0, nick="닉", msg="선물", highlight=True)], box=False, box_shape="pill")[0]
+        self.assertIn(r"\c&HA25FFF&\1a&H26&", box)   # 분홍, 불투명도 0.85
+        self.assertIn(rounded_rect_drawing(112, 32, 16), box)
+
+    def test_older_rows_box_and_border_fade_with_age(self):
+        lines = self.build([ev(0, nick="둘", msg="안녕"), ev(1, nick="닉", msg="안녕")], box_shape="rounded",
+                           box_border=2)
+        older_fill, older_ring = lines[3], lines[4]     # 두 번째 화면의 위 줄
+        self.assertIn(r"\1a&H89&", older_fill)          # 255 - round(127×237/255)
+        self.assertIn(r"\1a&H12&", older_ring)          # 테두리는 글자처럼 18 만큼만 흐려짐
+        self.assertIn(rounded_rect_drawing(58, 28, 6), older_fill)
 
 
 class HelpersTest(unittest.TestCase):

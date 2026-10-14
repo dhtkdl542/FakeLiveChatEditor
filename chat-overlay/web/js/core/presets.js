@@ -4,6 +4,7 @@ const BASE = Object.freeze({
   align: "right", sideMargin: "24", bottomMargin: "24", lineH: "36", visible: "8", maxChars: "22",
   nickSize: "20", msgSize: "18", nickBold: "", msgColor: "#ffffff", outline: "2",
   box: "", boxColor: "#000000", boxOpacity: "45", boxPadding: "6",
+  boxShape: "square", boxRadius: "8", boxBorder: "0", boxBorderColor: "#ffffff",
   icon: "", iconFollowNick: "1", iconColor: "#ff4d6d", iconScale: "100",
 });
 
@@ -15,9 +16,12 @@ export const CHAT_TEMPLATES = Object.freeze({
   boxIcon: chat("박스 + 닉 색 아이콘", { box: "1", boxColor: "#101018", boxOpacity: "60", boxPadding: "7", icon: "circle",
     iconScale: "70", nickBold: "1", lineH: "38" }),
   heart: chat("하트 + 굵은 닉", { outline: "3", icon: "heart", iconFollowNick: "", nickBold: "1" }),
-  panda: chat("팬더티비 풍", { box: "1", boxColor: "#2b1030", boxOpacity: "50", icon: "heart", iconFollowNick: "",
-    iconColor: "#ff5fa2", iconScale: "80", nickBold: "1", outline: "1" }),
+  panda: chat("팬더티비 풍", { box: "1", boxColor: "#2b1030", boxOpacity: "50", boxShape: "rounded", boxRadius: "10",
+    boxBorder: "1", boxBorderColor: "#ff8fbf", icon: "heart", iconFollowNick: "", iconColor: "#ff5fa2", iconScale: "80",
+    nickBold: "1", outline: "1" }),
   afreeca: chat("아프리카TV 풍", { outline: "3", nickBold: "1", nickSize: "19", msgSize: "19", lineH: "34", visible: "10" }),
-  youtube: chat("유튜브 라이브 풍", { box: "1", boxColor: "#0f0f0f", boxOpacity: "55", boxPadding: "8", icon: "circle",
-    iconScale: "110", nickSize: "17", lineH: "40", outline: "0" }),
+  youtube: chat("유튜브 라이브 풍", { box: "1", boxColor: "#0f0f0f", boxOpacity: "55", boxPadding: "8", boxShape: "rounded",
+    boxRadius: "8", icon: "circle", iconScale: "110", nickSize: "17", lineH: "40", outline: "0" }),
+  pill: chat("알약 박스", { box: "1", boxColor: "#1b1b2a", boxOpacity: "70", boxPadding: "7", boxShape: "pill",
+    nickBold: "1", lineH: "38", outline: "0" }),
 });

@@ -6,10 +6,10 @@ export function suggestOutputName(videoPath) {
 }
 
 /** previewMatchesVideo: 미리보기 타임라인(채팅 · 후원)이 실제 영상 길이로 만들어졌으면 그대로 보내서 결과를 똑같이 만든다.
- *  스티커는 시간과 상관없는 배치라 항상 보낸다. */
+ *  스티커는 시간과 상관없는 배치라 항상 보낸다. textWidths 는 그 타임라인 줄들의 글자 폭(둥근 박스용)이라 같이 보낸다. */
 export function buildRenderRequest({ videoPath, outputPath, settings, events, previewMatchesVideo, stickers = [],
-  donations = [] }) {
+  donations = [], textWidths = {} }) {
   const out = { ...settings, STICKERS: stickers };
-  if (previewMatchesVideo) Object.assign(out, { EVENTS: events, DONATIONS: donations });
+  if (previewMatchesVideo) Object.assign(out, { EVENTS: events, DONATIONS: donations, TEXT_WIDTHS: textWidths });
   return { videoPath, outputPath, settings: out };
 }

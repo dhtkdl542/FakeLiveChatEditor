@@ -1,4 +1,6 @@
 // 글꼴의 윗선 · 아랫선 비율(em 기준)을 캔버스로 잰다. libass 글자 크기를 CSS 크기로 바꾸거나 기준선을 잡을 때 쓴다.
+import { cssFontPx } from "../core/fontmetrics.js";
+
 const PROBE_PX = 100;
 
 export class FontMetrics {
@@ -28,6 +30,12 @@ export class FontMetrics {
   ascentShare(family) {
     const { asc, desc } = this.measure(family);
     return asc / (asc + desc);
+  }
+
+  /** libass 글자 크기 assPx 로 쓴 text 의 폭 (영상 px). 미리보기 글자와 같은 글꼴 · 크기로 잰다. */
+  textWidth(text, family, assPx, bold) {
+    this.#ctx.font = `${bold ? 700 : 400} ${cssFontPx(assPx, this.lineRatio(family))}px "${family}", "Malgun Gothic", sans-serif`;
+    return this.#ctx.measureText(text).width;
   }
 
   forget() {

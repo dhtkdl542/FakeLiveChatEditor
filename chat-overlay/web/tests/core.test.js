@@ -70,7 +70,7 @@ test("ChatLayout.fade: 새 줄은 서서히 나타나고 꽉 찼을 때 맨 윗�
 
 test("ChatLayout.paint: 글자 흐림과 박스 배경색", () => {
   const plain = new ChatLayout(OverlayStyle.fromSettings({}));
-  assert.deepEqual(plain.paint({ alpha: 51 }), { textOpacity: 0.8, background: null });
+  assert.deepEqual(plain.paint({ alpha: 51 }), { textOpacity: 0.8, background: null, radius: 0, border: null });
   const boxed = new ChatLayout(OverlayStyle.fromSettings({ BOX: true, BOX_COLOR: "#102030", BOX_OPACITY: 0.5 }));
   const p = boxed.paint({ alpha: 0 });
   assert.equal(p.textOpacity, 1);

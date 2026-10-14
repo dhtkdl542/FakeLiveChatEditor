@@ -1,11 +1,13 @@
 // 영상 불러오기와 mp4 저장
 import { buildRenderRequest, suggestOutputName } from "../core/export.js";
+import { ChatLayout, OverlayStyle } from "../core/layout.js";
 import { fmtTime } from "../core/format.js";
 import { $, setStatus } from "./dom.js";
 
 export class ExportController {
-  constructor({ api, source, video, preview, getSettings, stickers }) {
-    Object.assign(this, { api, source, video, preview, getSettings, stickers });
+  /** measure(text, font, assPx, bold): 결과 영상의 둥근 박스 폭을 재는 데 쓰는 글자 폭 측정기 */
+  constructor({ api, source, video, preview, getSettings, stickers, measure }) {
+    Object.assign(this, { api, source, video, preview, getSettings, stickers, measure });
     this.status = $("#exportStatus");
     $("#btnPick").onclick = () => this.pick();
     $("#btnRender").onclick = () => this.render();
@@ -46,10 +48,12 @@ export class ExportController {
       const save = await this.api.pickSave(suggestOutputName(this.source.path));
       if (!save.path) return setStatus(this.status, "저장을 취소했습니다.");
       setStatus(this.status, "FFmpeg 로 영상을 만드는 중... 영상 길이에 따라 몇 분 걸릴 수 있습니다.", "warn");
+      const events = this.preview.events(settings);
       const data = await this.api.render(buildRenderRequest({
         videoPath: this.source.path, outputPath: save.path, settings,
-        events: this.preview.events(settings), previewMatchesVideo: this.source.hasVideo,
+        events, previewMatchesVideo: this.source.hasVideo,
         stickers: this.stickers.toJSON(), donations: this.preview.donations(settings),
+        textWidths: new ChatLayout(OverlayStyle.fromSettings(settings)).textWidths(events, this.measure),
       }));
       setStatus(this.status, "저장 완료: " + data.output, "ok");
     } catch (e) {

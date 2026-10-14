@@ -10,7 +10,7 @@ def numbers(path):
 
 class IconShapeTest(unittest.TestCase):
     def test_available_icons(self):
-        self.assertEqual(ICON_NAMES, ("circle", "rounded", "heart", "star", "crown", "diamond"))
+        self.assertEqual(ICON_NAMES, ("circle", "rounded", "heart", "star", "crown", "diamond", "shield"))
 
     def test_every_shape_fills_height_and_starts_at_left(self):
         # libass 는 드로잉의 아래쪽을 글자 기준선에 맞추므로, 모든 모양이 세로 0~100 을 꽉 채워야 미리보기와 같다

@@ -178,6 +178,21 @@ class OverlayRendererTest(unittest.TestCase):
         self.assertIn("♥ ₩2,000 후원!", ass)            # 채팅 후원 줄
         self.assertRegex(ass, r"Dialogue: 2\d,[^\n]*\\c&HD4B800&")  # 슈퍼챗 하늘색 머리띠(#00b8d4) 알림
 
+    def test_browser_text_widths_let_the_box_be_rounded(self):
+        settings = {**SETTINGS, "BOX": True, "BOX_SHAPE": "pill",
+                    "EVENTS": [{"t": 1.0, "nick": "닉", "msg": "안녕", "color": "#00ff00"}],
+                    "TEXT_WIDTHS": {"닉\x01안녕\x010": 80}}
+        self.renderer.render(self.src, settings)
+        ass = self.ff.burned[0][3]
+        self.assertRegex(ass, r"Dialogue: 8,[^\n]*\\p3}m ")   # 직접 그린 박스
+        self.assertNotIn(",ChatBox,", ass.split("[Events]")[1])
+
+    def test_badges_reach_the_chat(self):
+        settings = {**SETTINGS, "BADGES_ON": True, "EVENTS": [{"t": 1.0, "nick": "닉", "msg": "안녕", "color": "#00ff00"}],
+                    "BADGES": [{"key": "manager", "label": "매니저", "icon": "shield", "color": "#22c55e", "share": 1}]}
+        self.renderer.render(self.src, settings)
+        self.assertIn(r"{\c&H5EC522&\p3}", self.ff.burned[0][3])
+
     def test_generated_donations_join_the_chat_when_no_browser_timeline(self):
         settings = {**SETTINGS, "DONATIONS_ON": True, "DONATION_EVERY": 1, "DONATION_UNIT": "하트"}
         self.renderer.render(self.src, settings)

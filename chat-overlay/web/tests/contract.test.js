@@ -9,6 +9,7 @@ import { SpeedCurve } from "../js/core/speed.js";
 import { EventGenerator } from "../js/core/events.js";
 import { ChatLayout, OverlayStyle, boxAlpha } from "../js/core/layout.js";
 import { ICON_NAMES, iconShape } from "../js/core/icons.js";
+import { badgeFor, nickHash } from "../js/core/badges.js";
 
 const contract = JSON.parse(readFileSync(new URL("../../shared/contract.json", import.meta.url), "utf-8"));
 const close = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps;
@@ -160,6 +161,13 @@ test("alert schedule · animation: 같은 일정과 움직임", () => {
   for (const [ms, scale, opacity] of contract.alertAnim) {
     assert.ok(close(alertScale(ms), scale, 1e-9), `scale ${ms}`);
     assert.ok(close(alertOpacity(ms, 4000), opacity, 1e-9), `opacity ${ms}`);
+  }
+});
+
+test("badges: 같은 닉 해시 · 같은 배지", () => {
+  for (const [nick, h] of contract.badges.hashes) assert.equal(nickHash(nick), h, nick);
+  for (const { badges, overrides, picks } of contract.badges.cases) {
+    for (const [nick, key] of picks) assert.equal(badgeFor(nick, badges, overrides)?.key ?? "", key, nick);
   }
 });
 

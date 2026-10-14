@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT))
 import dataclasses  # noqa: E402
 
 from chatov.ass import ChatLayout, OverlayStyle, box_alpha  # noqa: E402
+from chatov.badges import DEFAULT_BADGES, Badge, badge_for, nick_hash  # noqa: E402
 from chatov.donations import (Donation, DonationGenerator, alert_opacity, alert_scale, merge_into_chat,  # noqa: E402
                               schedule_alerts, format_gift, donation_chat_text)
 from chatov.shapes import ring_drawing, rounded_rect_drawing  # noqa: E402
@@ -45,6 +46,13 @@ GEN_CASES = [
         "INTERVAL_MAX": 0.3, **SPEED_CASES[1]}},
 ]
 
+BADGE_NICKS = ["a", "abc", "", "별빛여우", "감자칩", "새벽산책", "a😀", "코코넛", "구름빵", "오늘도출근"] +     [f"시청자{i}" for i in range(30)]
+BADGE_CASES = [
+    (DEFAULT_BADGES, {}),
+    ((Badge("manager", "매니저", "crown", "#123456", 0.3), Badge("vip", "VIP", "diamond", "#abcdef", 0.5)),
+     {"별빛여우": "vip", "감자칩": "", "코코넛": "없는배지"}),
+]
+
 LAYOUT_STYLE = {"VISIBLE": 4, "FADE_UP_STRENGTH": 70, "MAX_CHARS_PER_LINE": 5}
 LAYOUT_EVENTS = [ChatEvent(i * 0.5, f"n{i}", msg, "#ff0000")
                  for i, msg in enumerate(["짧음", "가나다라마바사아", "ok", "1234567890123", "끝"])]
@@ -74,7 +82,14 @@ def build() -> dict:
             "frames": [[r.__dict__ for r in ChatLayout(OverlayStyle.from_settings(LAYOUT_STYLE)).rows_at(LAYOUT_EVENTS, i)]
                        for i in range(len(LAYOUT_EVENTS))],
         },
-        "styleDefaults": OverlayStyle.from_settings({}).__dict__,
+        "styleDefaults": dataclasses.asdict(OverlayStyle.from_settings({})),
+        "badges": {
+            "hashes": [[n, nick_hash(n)] for n in BADGE_NICKS],
+            "cases": [{"badges": [dataclasses.asdict(b) for b in badges], "overrides": overrides,
+                       "picks": [[n, (badge_for(n, badges, overrides) or Badge("", "", "", "", 0)).key]
+                                 for n in BADGE_NICKS]}
+                      for badges, overrides in BADGE_CASES],
+        },
         "positions": [
             {"cfg": cfg, "width": 1280, "height": 720, "points": [
                 [age, list(ChatLayout(OverlayStyle.from_settings(cfg)).position(_row(age), 1280, 720))]

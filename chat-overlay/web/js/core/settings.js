@@ -3,6 +3,10 @@ import { ICON_NAMES } from "./icons.js";
 import { linesOf } from "./lines.js";
 import { normalizeHex } from "./text.js";
 import { platformKey, PLATFORMS } from "./platforms.js";
+import { DEFAULT_BADGES, parseBadgeOverrides } from "./badges.js";
+
+const BOX_SHAPES = ["square", "rounded", "pill"];
+const cap = s => s[0].toUpperCase() + s.slice(1);
 
 const DEFAULT_FONT = "Malgun Gothic";
 const bool = v => v === true || v === "1" || v === "on";
@@ -13,8 +17,27 @@ export class Settings {
     chatStart: 0.5, intMin: 0.25, intMax: 0.7, fadeIn: 180, fadeOut: 450, fadeUp: 18,
     speedVar: 50, speedPeriod: 8, nickSize: 20, msgSize: 18,
     outline: 2, boxOpacity: 45, boxPadding: 6, iconScale: 100,
-    donationEvery: 15, donationMsgChance: 40,
+    donationEvery: 15, donationMsgChance: 40, boxRadius: 8, boxBorder: 0,
   });
+
+  /** 배지 칸 이름: badgeManagerIcon / badgeManagerColor / badgeManagerShare … */
+  static badgeField(key, part) {
+    return `badge${cap(key)}${part}`;
+  }
+
+  static #badges(raw) {
+    return DEFAULT_BADGES.map(b => {
+      const f = part => raw[Settings.badgeField(b.key, part)];
+      const share = Number(f("Share"));
+      return {
+        ...b,
+        icon: ICON_NAMES.includes(f("Icon")) ? f("Icon") : b.icon,
+        color: normalizeHex(f("Color")) || b.color,
+        share: f("Share") === undefined || f("Share") === "" || !Number.isFinite(share)
+          ? b.share : Math.min(100, Math.max(0, share)) / 100,
+      };
+    });
+  }
 
   static #amounts(text, fallback) {
     const list = String(text || "").split(/[,\s]+/).map(Number).filter(n => Number.isFinite(n) && n > 0).map(Math.trunc);
@@ -27,6 +50,8 @@ export class Settings {
     "chatStart", "intMin", "intMax", "fadeIn", "fadeOut", "speedVar", "speedPeriod",
     "nickFont", "nickSize", "nickBold", "msgFont", "msgSize", "msgColor",
     "outline", "box", "boxColor", "boxOpacity", "boxPadding", "icon", "iconFollowNick", "iconColor", "iconScale",
+    "boxShape", "boxRadius", "boxBorder", "boxBorderColor", "badgesOn", "badgeOverrides",
+    ...DEFAULT_BADGES.flatMap(b => ["Icon", "Color", "Share"].map(part => `badge${cap(b.key)}${part}`)),
     "nicks", "msgs", "platform", "donationsOn", "donationEvery", "donationAmounts", "donationMsgChance", "donationUnit",
   ]);
 
@@ -41,6 +66,7 @@ export class Settings {
   static fromForm(raw, { colors, phases, sections, loadedFonts = {} }) {
     const n = (key, opts) => Settings.#num(raw, key, opts);
     const platform = platformKey(raw.platform);
+    const badges = Settings.#badges(raw);
     return Object.freeze({
       ALIGN: raw.align === "left" ? "left" : "right",
       SIDE_MARGIN: n("sideMargin", { min: 0, int: true }),
@@ -72,6 +98,13 @@ export class Settings {
       ICON: ICON_NAMES.includes(raw.icon) ? raw.icon : "",
       ICON_COLOR: bool(raw.iconFollowNick) ? "" : normalizeHex(raw.iconColor) || "",
       ICON_SCALE: n("iconScale", { min: 30, max: 300 }) / 100,
+      BOX_SHAPE: BOX_SHAPES.includes(raw.boxShape) ? raw.boxShape : "square",
+      BOX_RADIUS: n("boxRadius", { min: 0, max: 200, int: true }),
+      BOX_BORDER: n("boxBorder", { min: 0, max: 20, int: true }),
+      BOX_BORDER_COLOR: normalizeHex(raw.boxBorderColor) || "#ffffff",
+      BADGES_ON: bool(raw.badgesOn),
+      BADGES: badges,
+      BADGE_OVERRIDES: parseBadgeOverrides(raw.badgeOverrides, badges),
       NICKS: linesOf(raw.nicks),
       MSGS: linesOf(raw.msgs),
       COLORS: [...colors],

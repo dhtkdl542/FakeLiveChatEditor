@@ -111,6 +111,12 @@
             <label class="field"><span>안쪽 여백 <i>px</i></span><input type="number" data-field="boxPadding" value="6" min="0" max="60"></label>
           </div>
           <label class="field"><span>박스 불투명도 <i data-show="boxOpacity" data-unit="%"></i></span><input type="range" data-field="boxOpacity" value="45" min="0" max="100"></label>
+          <div class="grid3">
+            <label class="field"><span>박스 모양</span><select data-field="boxShape"><option value="square" selected>각진 박스</option><option value="rounded">둥근 박스</option><option value="pill">알약</option></select></label>
+            <label class="field"><span>모서리 <i>px · 둥근 박스</i></span><input type="number" data-field="boxRadius" value="8" min="0" max="200"></label>
+            <label class="field"><span>테두리 <i>px · 0 = 없음</i></span><input type="number" data-field="boxBorder" value="0" min="0" max="20"></label>
+          </div>
+          <label class="field"><span>테두리 색</span><input type="color" data-field="boxBorderColor" value="#ffffff"></label>
           <h4>닉네임 앞 아이콘</h4>
           <div class="grid3">
             <label class="field"><span>모양</span><select data-field="icon" id="iconSelect"><option value="">없음</option></select></label>
@@ -118,7 +124,33 @@
             <label class="field"><span>아이콘 색</span><input type="color" data-field="iconColor" value="#ff4d6d"></label>
           </div>
           <label class="field"><span>아이콘 크기 <i data-show="iconScale" data-unit="%"></i></span><input type="range" data-field="iconScale" value="100" min="30" max="200"></label>
-          <p class="hint">박스를 켜면 글자 테두리 대신 박스가 그려집니다. 박스와 아이콘은 결과 영상에도 똑같이 들어갑니다.</p>
+          <p class="hint">박스를 켜면 글자 테두리 대신 박스가 그려집니다. 박스 모양 · 테두리는 후원 줄에도 똑같이 쓰이고, 결과 영상에도 그대로 들어갑니다.</p>
+        </div>
+
+        <div class="card" id="badgeCard">
+          <h3>닉네임 배지</h3>
+          <p class="hint">매니저 · 열혈팬 · 구독자 배지를 정한 비율만큼 닉네임에 나눠 줍니다. 같은 닉네임은 영상 내내 같은 배지이고, 배지가 없는 닉은 계속 없습니다. 위의 '닉네임 앞 아이콘'을 켜 두면 그 아이콘 다음에 배지가 붙습니다.</p>
+          <label class="field check"><input type="checkbox" data-field="badgesOn" checked><span>배지 켜기</span></label>
+          <h4>매니저</h4>
+          <div class="grid3">
+            <label class="field"><span>모양</span><select data-field="badgeManagerIcon"></select></label>
+            <label class="field"><span>색</span><input type="color" data-field="badgeManagerColor" value="#22c55e"></label>
+            <label class="field"><span>비율 <i>%</i></span><input type="number" data-field="badgeManagerShare" value="8" min="0" max="100"></label>
+          </div>
+          <h4>열혈팬</h4>
+          <div class="grid3">
+            <label class="field"><span>모양</span><select data-field="badgeFanIcon"></select></label>
+            <label class="field"><span>색</span><input type="color" data-field="badgeFanColor" value="#ff4d6d"></label>
+            <label class="field"><span>비율 <i>%</i></span><input type="number" data-field="badgeFanShare" value="12" min="0" max="100"></label>
+          </div>
+          <h4>구독자</h4>
+          <div class="grid3">
+            <label class="field"><span>모양</span><select data-field="badgeSubIcon"></select></label>
+            <label class="field"><span>색</span><input type="color" data-field="badgeSubColor" value="#ffb300"></label>
+            <label class="field"><span>비율 <i>%</i></span><input type="number" data-field="badgeSubShare" value="25" min="0" max="100"></label>
+          </div>
+          <label class="field"><span>직접 정하기 <i>한 줄에 '닉네임 배지', 배지는 매니저 · 열혈팬 · 구독자 · 없음</i></span><textarea data-field="badgeOverrides" rows="3" placeholder="별빛여우 매니저&#10;감자칩 없음"></textarea></label>
+          <p class="status" id="badgeSummary"></p>
         </div>
       </section>
 

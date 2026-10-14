@@ -8,7 +8,7 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
-ICON_NAMES = ("circle", "rounded", "heart", "star", "crown", "diamond")
+ICON_NAMES = ("circle", "rounded", "heart", "star", "crown", "diamond", "shield")
 
 _RAW = {
     "circle": "m 50 0 b 77.6 0 100 22.4 100 50 b 100 77.6 77.6 100 50 100 b 22.4 100 0 77.6 0 50 b 0 22.4 22.4 0 50 0",
@@ -19,6 +19,7 @@ _RAW = {
     "star": "m 50 0 l 61.8 35.4 99 35.4 69.1 57.3 80.3 92.7 50 70.8 19.7 92.7 30.9 57.3 1 35.4 38.2 35.4",
     "crown": "m 0 85 l 0 25 27 50 50 10 73 50 100 25 100 85",
     "diamond": "m 50 0 l 100 50 50 100 0 50",
+    "shield": "m 50 0 l 100 14 l 100 48 b 100 76 78 94 50 100 b 22 94 0 76 0 48 l 0 14 l 50 0",
 }
 
 _TOKEN = re.compile(r"[mlb]|-?\d+(?:\.\d+)?")

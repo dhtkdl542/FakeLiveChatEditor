@@ -1,9 +1,26 @@
 // 화면에 보이는 채팅 줄 배치와 모양. chatov/ass.py 의 ChatLayout / AssWriter 와 같은 규칙.
+import { badgeFor, DEFAULT_BADGES } from "./badges.js";
+import { ICON_NAMES, iconShape } from "./icons.js";
 import { Color, wrapText } from "./text.js";
 
 const MAX_ALPHA = 200;
 export const ICON_EM = 0.8;
 const ALIGNS = ["right", "left"];
+const BOX_SHAPES = ["square", "rounded", "pill"];
+
+/** 결과 영상이 줄 폭(TEXT_WIDTHS)을 찾는 열쇠. chatov/ass.py row_key 와 같다. */
+export function rowKey(nick, msg, highlight) {
+  return `${nick}\u0001${msg}\u0001${highlight ? 1 : 0}`;
+}
+
+function badgesFromSettings(raw) {
+  if (raw === undefined || raw === null) return DEFAULT_BADGES.map(b => ({ ...b }));
+  return raw.filter(b => b && typeof b === "object" && !Array.isArray(b)).map(b => {
+    const share = Number(b.share ?? 0);
+    return { key: String(b.key || ""), label: String(b.label || ""), icon: ICON_NAMES.includes(b.icon) ? b.icon : "",
+      color: b.color || "#ffffff", share: Number.isFinite(share) ? clamp01(share) : 0 };
+  });
+}
 
 const round = v => Math.floor(v + 0.5);
 const clamp01 = v => Math.min(1, Math.max(0, v));
@@ -51,12 +68,37 @@ export class OverlayStyle {
       iconScale: num("ICON_SCALE", 1.0),
       highlightColor: cfg.HIGHLIGHT_COLOR || "#ff5fa2",
       highlightOpacity: clamp01(num("HIGHLIGHT_OPACITY", 0.85)),
+      boxShape: BOX_SHAPES.includes(cfg.BOX_SHAPE) ? cfg.BOX_SHAPE : "square",
+      boxRadius: Math.max(0, int("BOX_RADIUS", 8)),
+      boxBorder: Math.max(0, int("BOX_BORDER", 0)),
+      boxBorderColor: cfg.BOX_BORDER_COLOR || "#ffffff",
+      badges: badgesFromSettings(cfg.BADGES),
+      badgesOn: bool(cfg.BADGES_ON ?? false),
+      badgeOverrides: Object.fromEntries(Object.entries(cfg.BADGE_OVERRIDES || {}).map(([k, v]) => [String(k), String(v)])),
     });
   }
 
   /** 박스가 있는 줄(박스 모드이거나 후원 줄)은 박스 여백만큼 안쪽에 놓는다 */
   padding(row) {
     return this.box || row.highlight ? this.boxPadding : 0;
+  }
+
+  badge(nick) {
+    return this.badgesOn && nick ? badgeFor(nick, this.badges, this.badgeOverrides) : null;
+  }
+
+  /** 닉 앞에 그릴 [모양, 색] 목록: 공통 아이콘 다음에 배지 */
+  icons(row) {
+    if (!row.nick) return [];
+    const out = this.icon ? [[this.icon, this.iconColor || row.color]] : [];
+    const b = this.badge(row.nick);
+    if (b && b.icon) out.push([b.icon, b.color]);
+    return out;
+  }
+
+  /** 각진 박스에 테두리도 없으면 libass 줄 박스로 충분하다. 나머지는 결과 영상에서 직접 그린다. */
+  get drawsBox() {
+    return this.boxShape !== "square" || this.boxBorder > 0;
   }
 }
 
@@ -116,14 +158,48 @@ export class ChatLayout {
     return 1;
   }
 
-  /** 위쪽 흐림을 반영한 글자 불투명도와 박스 배경색 (ASS \1a / \4c\4a 와 같은 값) */
+  /** 위쪽 흐림을 반영한 글자 불투명도와 박스 모양 (ASS 와 같은 값). radius · border 는 영상 px. */
   paint(row) {
     const s = this.style;
     const textOpacity = 1 - row.alpha / 255;
-    if (!s.box && !row.highlight) return { textOpacity, background: null };
+    if (!s.box && !row.highlight) return { textOpacity, background: null, radius: 0, border: null };
     const c = Color.parse(row.highlight ? s.highlightColor : s.boxColor);
     const opacity = row.highlight ? s.highlightOpacity : s.boxOpacity;
-    return { textOpacity, background: `rgba(${c.r},${c.g},${c.b},${(255 - boxAlpha(opacity, row.alpha)) / 255})` };
+    const h = Math.max(s.nickSize, s.msgSize) + 2 * s.padding(row);
+    const radius = s.boxShape === "pill" ? h / 2 : s.boxShape === "rounded" ? Math.min(s.boxRadius, h / 2) : 0;
+    const b = Color.parse(s.boxBorderColor);
+    // 테두리는 글자처럼 위로 갈수록만 흐려진다 (박스 불투명도와 상관없음)
+    const border = s.boxBorder > 0
+      ? { width: s.boxBorder, color: `rgba(${b.r},${b.g},${b.b},${(255 - boxAlpha(1, row.alpha)) / 255})` } : null;
+    return { textOpacity, background: `rgba(${c.r},${c.g},${c.b},${(255 - boxAlpha(opacity, row.alpha)) / 255})`, radius, border };
+  }
+
+  /** 줄 하나의 글자 폭 (영상 px). measure(text, font, assPx, bold) 는 화면 쪽이 캔버스로 잰다.
+   *  libass 줄처럼: [아이콘 + 띄어쓰기]… + "닉 " + 대사. */
+  lineWidth(row, measure) {
+    const s = this.style;
+    let w = 0;
+    if (row.nick) {
+      for (const [name] of s.icons(row)) {
+        const shape = iconShape(name);
+        if (shape) w += (shape.width * this.iconSize()) / 100 + measure(" ", s.msgFont, s.msgSize, false);
+      }
+      w += measure(row.nick + " ", s.nickFont, s.nickSize, s.nickBold);
+    }
+    return w + measure(row.msg, s.msgFont, s.msgSize, Boolean(row.highlight));
+  }
+
+  /** 결과 영상에서 둥근 · 알약 박스를 그릴 수 있게 모든 줄의 글자 폭을 잰다 (rowKey → px) */
+  textWidths(events, measure) {
+    const out = {};
+    for (const e of events) {
+      wrapText(e.msg, this.style.maxChars).forEach((msg, i) => {
+        const row = { nick: i === 0 ? e.nick : "", msg, color: e.color, highlight: Boolean(e.highlight) };
+        const key = rowKey(row.nick, row.msg, row.highlight);
+        if (!(key in out)) out[key] = Math.floor(this.lineWidth(row, measure) * 100 + 0.5) / 100;
+      });
+    }
+    return out;
   }
 
   /** 글자 줄의 아래쪽 모서리 (right 면 오른쪽 아래, left 면 왼쪽 아래). 박스 바깥선이 여백에 닿게 안쪽으로 들인다. */

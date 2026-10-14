@@ -24,6 +24,7 @@ import { SectionsView } from "./ui/SectionsView.js";
 import { StickerLayer } from "./ui/StickerLayer.js";
 import { StickerPanel } from "./ui/StickerPanel.js";
 import { TemplatePanel } from "./ui/TemplatePanel.js";
+import { BadgesView } from "./ui/BadgesView.js";
 import { StageView } from "./ui/StageView.js";
 import { TabsView } from "./ui/TabsView.js";
 import { TimelineView } from "./ui/TimelineView.js";
@@ -64,7 +65,8 @@ preview = new PreviewController({
 new SectionsView($("#sections"), sections, { onPlayFrom: t => preview.playFrom(t) });
 new PaletteView(palette, () => linesOf(form.get("nicks")).length);
 palette.subscribe(() => preview.invalidate());
-new ExportController({ api, source, video, preview, getSettings, stickers: stickerList });
+new ExportController({ api, source, video, preview, getSettings, stickers: stickerList,
+  measure: (text, font, px, bold) => metrics.textWidth(text, font, px, bold) });
 
 // 꾸미기: 플랫폼 · 후원 설정과 스티커 목록은 브라우저에 저장하고, 그림 스티커는 다시 열 때 서버에 다시 등록한다
 const decoMemory = new FormMemory(prefs, "deco",
@@ -100,11 +102,13 @@ ollama.call("status");
 
 // 채팅 모양: 아이콘 목록과 프리셋 버튼
 $("#iconSelect").append(...ICON_NAMES.map(n => h("option", { value: n }, ICON_LABELS[n])));
+const badges = new BadgesView(form);
 $("#presets").replaceChildren(...Object.values(CHAT_TEMPLATES).map(p =>
   h("button", { type: "button", className: "btn ghost", onclick: () => form.apply(p.fields) }, p.label)));
 
 function refreshFormExtras() {
   form.refreshLabels();
+  badges.refresh(getSettings());
   decoMemory.save(form.values());
   const s = getSettings();
   const longest = s.MSGS.reduce((a, b) => (a.length >= b.length ? a : b), "");

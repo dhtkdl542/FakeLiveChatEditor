@@ -99,7 +99,8 @@ describe("export", () => {
     const req = buildRenderRequest({ videoPath: "C:/v.mp4", outputPath: "C:/o.mp4", settings: { NICKS: ["a"] },
       events: [{ t: 1, nick: "a", msg: "m", color: "#fff" }], previewMatchesVideo: true });
     assert.deepEqual(req, { videoPath: "C:/v.mp4", outputPath: "C:/o.mp4",
-      settings: { NICKS: ["a"], STICKERS: [], EVENTS: [{ t: 1, nick: "a", msg: "m", color: "#fff" }], DONATIONS: [] } });
+      settings: { NICKS: ["a"], STICKERS: [], EVENTS: [{ t: 1, nick: "a", msg: "m", color: "#fff" }], DONATIONS: [],
+        TEXT_WIDTHS: {} } });
   });
 
   test("미리보기가 영상 길이를 모르면 서버가 새로 만든다", () => {

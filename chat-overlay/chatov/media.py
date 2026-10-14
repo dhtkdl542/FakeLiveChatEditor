@@ -171,7 +171,9 @@ class OverlayRenderer:
         stickers = [Sticker.from_dict(d) for d in settings.get("STICKERS") or []]
         track = StickerTrack(info.width, info.height, stickers, donations, info.duration,
                              unit=settings.get("DONATION_UNIT") or "하트", platform=settings.get("PLATFORM") or "panda")
-        ass = AssWriter(info.width, info.height, OverlayStyle.from_settings(settings)).build(
+        # 둥근 · 알약 박스는 브라우저가 잰 줄 글자 폭으로 그린다 (없으면 각진 박스)
+        widths = settings.get("TEXT_WIDTHS") if settings.get("EVENTS") else None
+        ass = AssWriter(info.width, info.height, OverlayStyle.from_settings(settings), text_widths=widths).build(
             events, info.duration, extra=track.dialogues())
         overlays = [o for o in track.images() if Path(o.path).is_file()]
         with tempfile.TemporaryDirectory(prefix="chatov_") as work:

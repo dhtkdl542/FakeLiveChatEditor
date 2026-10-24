@@ -181,7 +181,7 @@ python tools/screenshots.py
 ## 폴더 구조
 
 ```
-가짜라이브채팅뷰럴꼬츄/
+FakeLiveChatEditor/
 ├─ 시작.bat · 테스트.bat · 빌드.bat
 ├─ docs/screenshots/          README 스크린샷
 └─ chat-overlay/
